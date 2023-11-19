@@ -41,7 +41,7 @@ func GetDB() *mongo.Database {
 // Migrations
 func MigrateDB() {
 	db := GetDB()
-	
+
 	logCollection := db.Collection("logs")
 
 	// Create an index on the 'timestamp' field

@@ -13,7 +13,7 @@ import (
 func HandleInjestLogs(c echo.Context) error {
 	fmt.Println("log")
 
-	log := new (models.Log)
+	log := new(models.Log)
 	if err := c.Bind(log); err != nil {
 		return err
 	}
@@ -21,9 +21,9 @@ func HandleInjestLogs(c echo.Context) error {
 	db := config.GetDB()
 
 	logCollection := db.Collection(models.LogCollectionName())
-	
+
 	_, err := logCollection.InsertOne(c.Request().Context(), log)
-	
+
 	if err != nil {
 		return utils.SendResponse(c, http.StatusInternalServerError, "Error while inserting log")
 	}

@@ -21,6 +21,6 @@ func main() {
 	config.MigrateDB()
 
 	router.InitRoutes(server)
-	
+
 	server.Logger.Fatal(server.Start(":" + config.ServerPort))
 }

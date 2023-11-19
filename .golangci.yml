@@ -4,6 +4,9 @@ output:
   print-linter-name: true
 
 linters:
+  gofmt:
+    mode: "fix"
+    args: ["-s"]
   enable:
     - errcheck # Detect unchecked errors
     - gosimple # Suggest code simplifications
