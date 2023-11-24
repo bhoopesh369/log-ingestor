@@ -4,9 +4,6 @@ output:
   print-linter-name: true
 
 linters:
-  gofmt:
-    mode: "fix"
-    args: ["-s"]
   enable:
     - errcheck # Detect unchecked errors
     - gosimple # Suggest code simplifications
@@ -23,4 +20,5 @@ linters:
     - misspell # Fix spelling errors
     - revive # General purpose linter
     - unconvert # Detect unnecessary type conversions
-    - unparam # Detect unused function parameters
+    - unparam # Detect unused function parameter
+
