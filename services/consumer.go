@@ -1,13 +1,19 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
+	"github.com/bhoopesh369/log-injestor/config"
+	"github.com/bhoopesh369/log-injestor/models"
+	"github.com/bhoopesh369/log-injestor/utils"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/labstack/echo/v4"
 )
 
-func ConsumerService() {
+func ConsumerService(c echo.Context) error {
 	topic := "msg"
 	// setting the consumer
 	fmt.Println("ConsumerService")
@@ -18,7 +24,7 @@ func ConsumerService() {
 	})
 	if err != nil {
 		fmt.Println("Failed to create consumer: ", err)
-		return
+		return err
 	}
 	defer consumer.Close()
 
@@ -26,18 +32,38 @@ func ConsumerService() {
 	err = consumer.SubscribeTopics([]string{topic}, nil)
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 
-	run := true
-	for run {
-		ev := consumer.Poll(100)
-		switch e := ev.(type) {
-		case *kafka.Message:
-			log.Printf("Received message: %s\n", string(e.Value))
-		case kafka.Error:
-			log.Printf("Error: %v\n", e)
-			run = false
+	for {
+		// read messages from the topic
+		msg, err := consumer.ReadMessage(-1)
+		if err == nil {
+			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+			// return c.String(200, string(msg.Value))
+			log := new(models.Log)
+			err = json.Unmarshal(msg.Value, &log)
+
+			if err != nil {
+				return utils.SendResponse(c, http.StatusInternalServerError, "Error while unmarshalling log")
+			}
+
+			db := config.GetDB()
+
+			logCollection := db.Collection(models.LogCollectionName())
+			fmt.Println(log)
+			_, err = logCollection.InsertOne(c.Request().Context(), log)
+
+			if err != nil {
+				return utils.SendResponse(c, http.StatusInternalServerError, "Error while inserting log")
+			}
+			return utils.SendResponse(c, http.StatusOK, "Log inserted successfully")
+		} else {
+			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+			break
 		}
 	}
+
+	consumer.Close()
+	return nil
 }

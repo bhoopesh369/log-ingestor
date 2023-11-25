@@ -1,15 +1,17 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/fatih/color"
+	"github.com/labstack/echo/v4"
 )
 
-func ProducerService() {
+func ProducerService(c echo.Context) {
 	// creating producer
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": "broker:9092",
@@ -25,22 +27,25 @@ func ProducerService() {
 
 	deliveryChan := make(chan kafka.Event, 10000)
 
-	for i := 0; i < 5; i++ {
-
-		value := fmt.Sprintf("%d msg from producer", i)
-		// writing message to a topic
-		err := p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-			Value:          []byte(value)},
-			deliveryChan,
-		)
-		if err != nil {
-			log.Println(err)
-		}
-		// this will block the execution until producing message is done.
-		<-deliveryChan
-		// to show that how it would perform if it's a time taking event.
-		time.Sleep(time.Second * 3)
-
+	// getting the data from the request body
+	data := make(map[string]interface{})
+	if err := c.Bind(&data); err != nil {
+		log.Println(err)
+	}
+	fmt.Println(color.GreenString("ProducerService"))
+	fmt.Println(data["message"])
+	// converting the data to byte array
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		log.Println(err)
+	}
+	// writing message to a topic
+	err = p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          dataBytes},
+		deliveryChan,
+	)
+	if err != nil {
+		log.Println(err)
 	}
 }

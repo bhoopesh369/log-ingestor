@@ -25,8 +25,5 @@ func main() {
 
 	services.SummaService()
 
-	services.ProducerService()
-	services.ConsumerService()
-
 	server.Logger.Fatal(server.Start(":" + config.ServerPort))
 }
