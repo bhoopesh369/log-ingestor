@@ -12,8 +12,9 @@ func HandleInjestLogs(c echo.Context) error {
 
 	go services.ProducerService(c)
 
-	services.ConsumerService(c)
-
-	// return c.String(200, "ok")
+	err := services.ConsumerService(c)
+	if err != nil {
+		return err
+	}
 	return nil
 }
